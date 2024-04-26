@@ -1,5 +1,12 @@
 # function to read in CSV, output AERMOD input file
 
+## to do:
+  ## find out format of receptor locations and rewrite them into something AERMOD can use
+  ## curious what restraints AERMOD has on formatting location data (limit the number of entries?)
+  ## what's an example of the meteorology data that we use?
+
+
+
 require(data.table)
 
 write_aermod_input <- function(input_row, individual = TRUE, all = TRUE) {
@@ -10,7 +17,7 @@ write_aermod_input <- function(input_row, individual = TRUE, all = TRUE) {
   names(entries) <- names(input_row)
   
   # control pathway
-  sink(paste0(filename, ".txt"))
+  sink(paste0(filename, ".INP"))
   cat("CO STARTING\n")
   cat(paste0("   TITLEONE ", entries$TITLEONE, "\n"))
   cat(paste0("   TITLETWO ", entries$TITLETWO, "\n"))
@@ -22,13 +29,18 @@ write_aermod_input <- function(input_row, individual = TRUE, all = TRUE) {
   
   # source pathway
   cat("SO STARTING\n")
-  cat(paste0("   LOCATION ", entries$source_id, "\t", entries$source_type, "\t", entries$X, "\t", entries$Y, "\t", entries$elev_m, "\n"))
-  cat(paste0("   SRCPARAM ", entries$source_id, "\t", entries$ER, "\t", entries$hgt_m, "\t", entries$temp_k, "\t", entries$vel_ms, "\t", entries$dia_m, "\n"))
+  for(i in 1:length(entries$source_id)) {
+    cat(paste0("   LOCATION ", entries$source_id[i], "\t", entries$source_type[i], "\t", entries$X[i], "\t", entries$Y[i], "\t", entries$elev_m[i], "\n"))
+  }
+  for(j in 1:length(entries$source_id)) {
+    cat(paste0("   SRCPARAM ", entries$source_id[j], "\t", entries$ER[j], "\t", entries$hgt_m[j], "\t", entries$temp_k[j], "\t", entries$vel_ms[j], "\t", entries$dia_m[j], "\n"))
+  }
   
   cat(paste0("   INCLUDED ", entries$INCLUDED), "\n")
   for(i in 1:length(entries$source_id)) {
-    cat(paste0("   SRCGROUP ", paste(rep(entries$source_id[i], each = 2), collapse = " ")), "\n\n")
+    cat(paste0("   SRCGROUP ", paste(rep(entries$source_id[i], each = 2), collapse = " ")), "\n")
   }
+  cat("\n")
   
   # receptor pathway
   cat("RE STARTING\n")
@@ -63,6 +75,12 @@ generate_airmod <- function(csv_file) {
   # get the number of rows
   rows <- nrow(df)
   
+  # loop through rows to generate textfiles
+  for(i in 1:rows) {
+    
+    write_aermod_input(df[i,])
+    
+  }
   
   
 }
